@@ -9,56 +9,73 @@ function htmlFromJson(jsonData) {
 
     let html = `<!DOCTYPE ${doctype}>\n<html lang="${lang}">\n<head>\n`;
 
-    const processObject = (obj) => {
+    const processObject = (obj, indent = '\t') => {
         Object.keys(obj).forEach(key => {
             if (typeof obj[key] === 'object') {
                 if (key !== 'attributes') {
-                    html += `\t<${key}`;
-                    if (obj[key].attributes) {
-                        Object.keys(obj[key].attributes).forEach(attr => {
-                            html += ` ${attr}="${obj[key].attributes[attr]}"`;
-                        });
+                    html += `${indent}<${key}`;
+                    const attributes = obj[key].attributes;
+    
+                    if (attributes) {
+                        const attrKeys = Object.keys(attributes);
+    
+                        if (attrKeys.length > 0) {
+                            html += ' ';
+                            attrKeys.forEach(attr => {
+                                if (attr === 'style' && typeof attributes[attr] === 'object') {
+                                    const styles = Object.keys(attributes[attr])
+                                        .map(styleKey => `${styleKey}: ${attributes[attr][styleKey]};`)
+                                        .join(' ');
+    
+                                    if (styles !== '') {
+                                        html += `style="${styles.trim()}"`;
+                                    }
+                                } else {
+                                    html += `${attr}="${attributes[attr]}"`;
+                                }
+                            });
+                        }
                     }
-                    if (obj[key].style) {
-                        let styleAttr = ' style="';
-                        Object.keys(obj[key].style).forEach(styleKey => {
-                            styleAttr += `${styleKey}: ${obj[key].style[styleKey]}; `;
-                        });
-                        styleAttr += '"';
-                        html += ` ${styleAttr}`;
+    
+                    if (key !== 'style') {
+                        html += '>\n';
                     }
-                    html += '>\n';
+    
                     delete obj[key].attributes;
                     delete obj[key].style;
-                    processObject(obj[key]);
-                    html += `\t</${key}>\n`;
+    
+                    if (key !== 'style') {
+                        processObject(obj[key], `${indent}\t`);
+                        html += `${indent}</${key}>\n`;
+                    }
                 } else if (key === 'link') {
                     obj[key].forEach(linkObj => {
-                        html += `\t<link`;
+                        html += `${indent}<link`;
                         Object.keys(linkObj).forEach(linkAttr => {
                             html += ` ${linkAttr}="${linkObj[linkAttr]}"`;
                         });
                         html += `>\n`;
                     });
                 } else {
-                    html += `\t<body`;
+                    html += `${indent}<body`;
                     if (obj[key].style) {
-                        let styleAttr = ' style="';
-                        Object.keys(obj[key].style).forEach(styleKey => {
-                            styleAttr += `${styleKey}: ${obj[key].style[styleKey]}; `;
-                        });
-                        styleAttr += '"';
-                        html += ` ${styleAttr}`;
+                        const styles = Object.keys(obj[key].style)
+                            .map(styleKey => `${styleKey}: ${obj[key].style[styleKey]};`)
+                            .join(' ');
+    
+                        if (styles !== '') {
+                            html += ` style="${styles.trim()}"`;
+                        }
                     }
                     html += '>\n';
                     delete obj[key].style;
                 }
             } else {
-                html += `\t<${key}>${obj[key]}</${key}>\n`;
+                html += `${indent}<${key}>${obj[key]}</${key}>\n`;
             }
         });
     };
-
+    
     if (jsonData.doctype === 'html') {
         html += '\t<meta charset="utf-8">\n';
         html += `\t<title>${jsonData.head.title}</title>\n`;
@@ -82,8 +99,8 @@ function htmlFromJson(jsonData) {
     }
 
     html += '</head>\n';
-    processObject(jsonData.body);
-    html += '\t</body>\n</html>';
+    processObject(jsonData.body, '\t');
+    html += '</html>';
 
     return html;
 }

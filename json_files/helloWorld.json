@@ -29,7 +29,14 @@
 				"text-align": "center"
 			}
 		},
-		"h1": "Json-Generated HTML page",
+		"h1": {
+			"attributes": {
+				"style": {
+					"color": "red"
+				}
+			},
+			"textContent": "Json-Generated HTML page"
+		},
 		"p": "Example HTML file generated from JSON.", 
 		"h2": "Imagine smart subtitle here",
 		"div":{
